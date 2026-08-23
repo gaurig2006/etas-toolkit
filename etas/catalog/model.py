@@ -27,16 +27,21 @@ class Catalog:
     """Typed container for standardized seismic event catalogs."""
 
     def __init__(self, df: pd.DataFrame, t0: Optional[pd.Timestamp] = None):
-        self.df = self._validate_and_format(df.copy(), t0)
+        self.df, self.origin_time = self._validate_and_format(df.copy(), t0)
 
     @classmethod
-    def _validate_and_format(cls, df: pd.DataFrame, t0: Optional[pd.Timestamp] = None) -> pd.DataFrame:
+    def _validate_and_format(cls, df: pd.DataFrame, t0: Optional[pd.Timestamp] = None) -> tuple[pd.DataFrame, pd.Timestamp]:
         if df.empty:
-            return pd.DataFrame({col: pd.Series(dtype=dt) for col, dt in REQUIRED_COLUMNS.items()})
+            return pd.DataFrame({col: pd.Series(dtype=dt) for col, dt in REQUIRED_COLUMNS.items()}), pd.Timestamp(0, tz="UTC")
+
+        # Validate required columns
+        for col in REQUIRED_COLUMNS:
+            if col not in df.columns and col != "time_days":
+                raise ValueError(f"Missing required column: {col}")
 
         # Ensure UTC datetime
         if not pd.api.types.is_datetime64_any_dtype(df["time"]):
-            df["time"] = pd.to_datetime(df["time"], utc=True)
+            df["time"] = pd.to_datetime(df["time"], format="ISO8601", utc=True)
         elif df["time"].dt.tz is None:
             df["time"] = df["time"].dt.tz_localize("UTC")
         else:
@@ -46,7 +51,14 @@ class Catalog:
         df = df.sort_values("time").reset_index(drop=True)
 
         # Compute continuous decimal days since reference origin t0
-        origin_time = t0 if t0 is not None else df["time"].iloc[0]
+        if t0 is None:
+            if "time_days" in df.columns:
+                origin_time = df["time"].iloc[0] - pd.Timedelta(days=df["time_days"].iloc[0])
+            else:
+                origin_time = df["time"].iloc[0]
+        else:
+            origin_time = t0
+
         delta = df["time"] - origin_time
         df["time_days"] = delta.dt.total_seconds() / 86400.0
 
@@ -65,7 +77,7 @@ class Catalog:
         if not (df["longitude"].between(-180.0, 180.0).all()):
             raise ValueError("Longitude values out of valid bounds [-180, 180]")
 
-        return df[list(REQUIRED_COLUMNS.keys()) + [c for c in df.columns if c not in REQUIRED_COLUMNS]]
+        return df[list(REQUIRED_COLUMNS.keys()) + [c for c in df.columns if c not in REQUIRED_COLUMNS]], origin_time
 
     def __len__(self) -> int:
         return len(self.df)
@@ -82,7 +94,15 @@ class Catalog:
 
     @classmethod
     def from_csv(cls, path: Union[str, Path]) -> Catalog:
-        df = pd.read_csv(path)
+        path_str = str(path)
+        if "sc-catalog.txt" in path_str:
+            import io
+            with open(path, "r") as f:
+                lines = f.readlines()
+            lines = [l for l in lines[2:] if "</PRE>" not in l]
+            df = pd.read_csv(io.StringIO("".join(lines)), comment="#")
+        else:
+            df = pd.read_csv(path)
         return cls(df)
 
     def to_parquet(self, path: Union[str, Path]) -> None:
@@ -94,4 +114,4 @@ class Catalog:
         return cls(df)
 
     def copy(self) -> Catalog:
-        return Catalog(self.df.copy())
+        return Catalog(self.df.copy(), t0=self.origin_time)

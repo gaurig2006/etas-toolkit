@@ -38,6 +38,15 @@ def test_catalog_roundtrip_csv_parquet(sample_df, tmp_path):
     assert len(loaded_pq) == 3
     assert np.allclose(loaded_pq.df["time_days"], cat.df["time_days"])
 
+def haversine(lon1, lat1, lon2, lat2):
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+    c = 2 * np.arcsin(np.sqrt(a))
+    r = 6371000 # Radius of earth in meters
+    return c * r
+
 def test_projection_submeter_accuracy(sample_df):
     cat = Catalog(sample_df)
     projected = project_catalog(cat)
@@ -52,12 +61,32 @@ def test_projection_submeter_accuracy(sample_df):
         c_lon,
         c_lat
     )
-    # Check degree differences translate to sub-meter tolerances (< 1e-5 deg)
-    assert np.allclose(rec_lon, cat.df["longitude"].values, atol=1e-5)
-    assert np.allclose(rec_lat, cat.df["latitude"].values, atol=1e-5)
+    dist_m = haversine(rec_lon, rec_lat, cat.df["longitude"].values, cat.df["latitude"].values)
+    assert np.all(dist_m < 1.0)
 
 def test_deduplication(sample_df):
     cat = Catalog(sample_df)
     cleaned = deduplicate(cat, dt_sec=2.0, dr_km=5.0)
     # nc1003 is within 1 sec and 0 km from nc1002, so it should be dropped
     assert len(cleaned) == 2
+
+def test_serialization_preserves_origin_after_filter(sample_df, tmp_path):
+    cat = Catalog(sample_df)
+    orig_time_days = cat.df["time_days"].copy()
+    
+    # Filter to exclude the first event
+    filtered = filter_catalog(cat, min_mag=3.0)
+    assert len(filtered) == 2
+    
+    # Check that time_days hasn't shifted
+    assert np.allclose(filtered.df["time_days"].values, orig_time_days.iloc[1:].values)
+    assert filtered.origin_time == cat.origin_time
+    
+    # Serialize and reload
+    pq_path = tmp_path / "filtered.parquet"
+    filtered.to_parquet(pq_path)
+    loaded = Catalog.from_parquet(pq_path)
+    
+    # Check again
+    assert np.allclose(loaded.df["time_days"].values, filtered.df["time_days"].values)
+    assert loaded.origin_time == filtered.origin_time
