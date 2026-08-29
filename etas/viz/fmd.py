@@ -45,7 +45,7 @@ def plot_fmd(catalog: Catalog, ax=None, mc=None, b_value=None, a_value=None):
         fit_logN = a_value - b_value * fit_mags
         fit_N = 10**fit_logN
         
-        ax.plot(fit_mags, fit_N, 'r-', label=f'b-value = {b_value:.2f}')
+        ax.plot(fit_mags, fit_N, 'r-', label=f'b={b_value:.2f}, a={a_value:.2f}')
 
     ax.set_yscale('log')
     ax.set_xlabel('Magnitude')

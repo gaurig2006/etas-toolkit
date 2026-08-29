@@ -15,8 +15,12 @@ def plot_eda(catalog: Catalog, save_path: str = None):
     """
     fig = plt.figure(figsize=(16, 12))
     
-    # 2 rows, 3 cols
-    ax_map = plt.subplot(2, 3, 1)
+    try:
+        import cartopy.crs as ccrs
+        ax_map = plt.subplot(2, 3, 1, projection=ccrs.PlateCarree())
+    except ImportError:
+        ax_map = plt.subplot(2, 3, 1)
+        
     plot_epicenter_map(catalog, ax=ax_map)
     
     ax_fmd = plt.subplot(2, 3, 2)
