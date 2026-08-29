@@ -45,3 +45,26 @@ def plot_depth_cross_section(catalog: Catalog, azimuth: float, ax=None):
     ax.grid(True, linestyle="--", alpha=0.5)
     
     return ax
+
+def plot_spatial_mc(grid_lon, grid_lat, mc_values, ax=None):
+    """
+    Plots a grid of spatial Mc values.
+    Stub: Will be populated using data from Phase 4.
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.text(0.5, 0.5, "Spatial Mc Map\n(Data from Phase 4)", ha='center', va='center')
+    ax.axis('off')
+    return ax
+
+def plot_spatial_b(grid_lon, grid_lat, b_values, mask=None, ax=None):
+    """
+    Plots a grid of spatial b-values.
+    Stub: Will be populated using data from Phase 5.
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.text(0.5, 0.5, "Spatial b-value Map\n(Data from Phase 5)", ha='center', va='center')
+    ax.axis('off')
+    return ax
+

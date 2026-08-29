@@ -44,3 +44,32 @@ def plot_interevent_time(catalog: Catalog, ax=None):
     ax.grid(True, linestyle="--", alpha=0.5)
     
     return ax
+
+def plot_cumulative_moment(catalog: Catalog, ax=None):
+    """
+    Cumulative seismic moment release over time, M0 = 10^(1.5 * Mw + 9.1).
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 4))
+        
+    if catalog.df.empty:
+        return ax
+        
+    df = catalog.df.dropna(subset=["time", "magnitude"]).sort_values("time")
+    if df.empty:
+        return ax
+        
+    times = df["time"]
+    mags = df["magnitude"]
+    
+    # Calculate moment (N m)
+    moment = 10 ** (1.5 * mags + 9.1)
+    cum_moment = np.cumsum(moment)
+    
+    ax.step(times, cum_moment, where='post', color='r')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Cumulative Moment (N m)')
+    ax.set_title('Cumulative Seismic Moment Release')
+    ax.grid(True, linestyle="--", alpha=0.5)
+    return ax
+

@@ -51,3 +51,35 @@ def plot_cumulative_events(catalog: Catalog, ax=None):
     ax.grid(True, linestyle="--", alpha=0.5)
     
     return ax
+
+def plot_time_mag_density(catalog: Catalog, ax=None):
+    """
+    Hexbin density plot of magnitude over time.
+    """
+    import matplotlib.dates as mdates
+    
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 4))
+        
+    if catalog.df.empty:
+        return ax
+        
+    df = catalog.df.dropna(subset=["time", "magnitude"])
+    if df.empty:
+        return ax
+        
+    # Convert dates to matplotlib numbers for hexbin
+    dates = mdates.date2num(df["time"])
+    mags = df["magnitude"]
+    
+    hb = ax.hexbin(dates, mags, gridsize=50, cmap='inferno', mincnt=1)
+    ax.xaxis_date()
+    
+    # Add colorbar
+    plt.colorbar(hb, ax=ax, label='Event Count')
+    
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Magnitude')
+    ax.set_title('Time-Magnitude Density')
+    return ax
+
