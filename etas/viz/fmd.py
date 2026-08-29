@@ -6,6 +6,7 @@ def plot_fmd(catalog: Catalog, ax=None, mc=None, b_value=None, a_value=None):
     """
     Plots the cumulative and incremental Frequency-Magnitude Distribution (FMD).
     Cites: theme-3 (EDA).
+    Formulas: Appendix B for Aki-Utsu MLE (b = log10(e) / (mean_m - (Mc - dm/2))) and Gutenberg-Richter log10 N(>=m) = a - bm.
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -35,6 +36,16 @@ def plot_fmd(catalog: Catalog, ax=None, mc=None, b_value=None, a_value=None):
 
     ax.plot(centers[valid], counts[valid], 'o', color='gray', label='Incremental', alpha=0.5)
     ax.plot(centers[valid_cum], cum_counts[valid_cum], 's', color='black', label='Cumulative')
+
+    # Calculate Aki-Utsu MLE if mc is provided but b/a are not
+    if mc is not None and (b_value is None or a_value is None):
+        mags_above = mags[mags >= mc]
+        if len(mags_above) > 0:
+            mean_mag = np.mean(mags_above)
+            # Appendix B formula: b = log10(e) / (mean_m - (Mc - dm/2))
+            # using dm = 0.1
+            b_value = np.log10(np.e) / (mean_mag - (mc - 0.05))
+            a_value = np.log10(len(mags_above)) + b_value * mc
 
     # Plot fitted line if provided
     if b_value is not None and a_value is not None and mc is not None:

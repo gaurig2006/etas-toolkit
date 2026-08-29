@@ -5,7 +5,7 @@ from etas.catalog.model import Catalog
 def plot_interevent_time(catalog: Catalog, ax=None):
     """
     Histogram of inter-event times vs theoretical Poisson.
-    Cites: theme-3 (EDA).
+    Cites: theme-3 (EDA); 01 Ogata 1988 (diagnostic plots motivation).
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -47,7 +47,8 @@ def plot_interevent_time(catalog: Catalog, ax=None):
 
 def plot_cumulative_moment(catalog: Catalog, ax=None):
     """
-    Cumulative seismic moment release over time, M0 = 10^(1.5 * Mw + 9.1).
+    Cumulative seismic moment release over time.
+    Cites: theme-3 (EDA). Formula: M0 = 10^(1.5 * Mw + 9.1).
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 4))

@@ -45,6 +45,7 @@ def plot_eda(catalog: Catalog, save_path: str = None):
     ax_inter = plt.subplot(2, 3, 6)
     plot_interevent_time(catalog, ax=ax_inter)
     
+    fig.suptitle('Exploratory Data Analysis (EDA) of Earthquake Catalog', fontsize=18, y=1.02)
     plt.tight_layout()
     
     if save_path:
