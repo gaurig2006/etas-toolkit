@@ -16,7 +16,7 @@ def fit_etas_em(catalog: Catalog,
     Fits the temporal ETAS model using the Expectation-Maximization (EM) algorithm.
     Includes multiple restarts to avoid local minima, and strict monotonicity guards.
     
-    Cites: 02 Veen & Schoenberg 2008.
+    Cites: 02 Veen & Schoenberg 2008, Eq. 1.
     
     Args:
         catalog: The earthquake Catalog.

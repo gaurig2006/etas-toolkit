@@ -9,7 +9,7 @@ def calc_mc_maxc(mags: Union[pd.Series, np.ndarray], bin_width: float = 0.1, cor
     The MAXC method estimates Mc as the magnitude bin with the highest number of events 
     in the non-cumulative frequency-magnitude distribution.
     
-    Cites: 05 Wiemer 2000 (ZMAP & Mc methods)
+    Cites: 05 Wiemer 2000, Eq. 1.
     
     Args:
         mags: Array or Series of earthquake magnitudes.

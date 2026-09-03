@@ -7,7 +7,7 @@ def calc_bvalue(data: Union[Catalog, pd.Series, np.ndarray], mc: float, bin_widt
     """
     Computes the b-value, a-value, and standard error (delta b) via the Aki-Utsu MLE.
     
-    Cites: Appendix B (Aki-Utsu MLE); 01 Ogata 1988 (for GR scaling context).
+    Cites: Appendix B, Eq. 2.
     Formulas:
         b = log10(e) / (<M> - (Mc - bin_width/2))
         a = log10(N) + b * Mc

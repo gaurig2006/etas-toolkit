@@ -9,7 +9,7 @@ def calc_mc_gft(mags: Union[pd.Series, np.ndarray], bin_width: float = 0.1, targ
     The algorithm tests progressively higher cutoff magnitudes. The true Mc is defined 
     as the lowest magnitude bin where R >= target_r (typically 90% or 95%).
     
-    Cites: 05 Wiemer 2000 (ZMAP & Mc methods)
+    Cites: 05 Wiemer 2000, Eq. 1.
     Formula: R = 100 - (sum(|B_i - S_i|) / sum(B_i)) * 100
     
     Args:

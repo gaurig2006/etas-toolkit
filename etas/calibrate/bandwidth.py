@@ -8,7 +8,7 @@ def optimize_bandwidth_cv(event_x: np.ndarray,
     """
     Selects the optimal KDE bandwidth using likelihood cross-validation.
     
-    Cites: 04 Helmstetter et al. 2007.
+    Cites: 04 Helmstetter et al. 2007, Eq. 1.
     
     Args:
         event_x: Array of event X coordinates.

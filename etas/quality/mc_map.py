@@ -11,7 +11,7 @@ def map_spatial_mc(catalog: Catalog, grid_lon: np.ndarray, grid_lat: np.ndarray,
     Iterates over a defined spatial grid, grabs the nearest N=250 events for each point, 
     and calculates Mc using the fast MAXC + 0.2 method.
     
-    Cites: 05 Wiemer 2000 (ZMAP & Mc methods)
+    Cites: 05 Wiemer 2000, Eq. 1.
     
     Args:
         catalog: The earthquake Catalog.

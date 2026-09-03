@@ -4,7 +4,7 @@ def spatial_kernel_powerlaw(dx: np.ndarray, dy: np.ndarray, m: np.ndarray, mc: f
     """
     Evaluates the normalized, magnitude-dependent power-law spatial kernel f(r; m).
     
-    Cites: 03 Zhuang et al. 2002.
+    Cites: 03 Zhuang et al. 2002, Eq. 1.
     Formula: f(r; m) = (q - 1) / (pi * D^2) * (1 + r^2 / D^2)^(-q)
     where D = d * exp(gamma * (m - mc)) and r^2 = dx^2 + dy^2
     

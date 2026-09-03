@@ -20,7 +20,7 @@ def zhuang_coupling_loop(t_hist: np.ndarray,
     Executes the Zhuang iterative fixed-point loop, coupling the EM calibration 
     of ETAS parameters with the KDE estimation of the spatial background field mu(x,y).
     
-    Cites: 03 Zhuang et al. 2002.
+    Cites: 03 Zhuang et al. 2002, Eq. 1.
     
     Args:
         t_hist, x_hist, y_hist, m_hist: Event data arrays.

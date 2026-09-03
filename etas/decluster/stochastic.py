@@ -4,7 +4,7 @@ def stochastic_decluster(bg_probs: np.ndarray, n_realizations: int = 100) -> np.
     """
     Performs stochastic declustering by binomial sampling of background probabilities.
     
-    Cites: 03 Zhuang et al. 2002.
+    Cites: 03 Zhuang et al. 2002, Eq. 1.
     
     Args:
         bg_probs: Array of background probabilities for each event.

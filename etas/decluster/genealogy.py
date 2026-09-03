@@ -11,7 +11,7 @@ def compute_triggering_matrix(catalog: Catalog,
     Computes the full background probability vector and rho_ij triggering matrix
     from a calibrated ETAS model.
     
-    Cites: 03 Zhuang et al. 2002.
+    Cites: 03 Zhuang et al. 2002, Eq. 1.
     
     Args:
         catalog: Calibrated event catalog.

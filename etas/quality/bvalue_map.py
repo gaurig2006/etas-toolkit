@@ -9,7 +9,7 @@ def map_spatial_b(catalog: Catalog, grid_lon: np.ndarray, grid_lat: np.ndarray, 
     Computes a spatial grid of b-values using the nearest N events to each grid point,
     applying the corresponding Mc value from the provided mc_grid.
     
-    Cites: 05 Wiemer 2000 (ZMAP methods for spatial mapping).
+    Cites: 05 Wiemer 2000, Eq. 1.
     
     Args:
         catalog: The earthquake Catalog.

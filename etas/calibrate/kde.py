@@ -12,7 +12,7 @@ def background_kde(eval_x: np.ndarray,
     """
     Computes a 2D Gaussian Kernel Density Estimate for the background rate mu(x,y).
     
-    Cites: 03 Zhuang et al. 2002; 04 Helmstetter et al. 2007.
+    Cites: 03 Zhuang et al. 2002; 04 Helmstetter et al. 2007, Eq. 1.
     Formula: mu(x,y) = sum_i bg_i * K_h(x - x_i, y - y_i)
     where K_h is a 2D Gaussian kernel with bandwidth h.
     
