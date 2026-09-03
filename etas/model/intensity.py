@@ -41,19 +41,26 @@ def temporal_intensity(eval_times: np.ndarray,
     # Precompute productivity weights
     weights = K * np.exp(alpha * (m_hist - mc))
     
-    # Vectorized computation
-    # For very large catalogs, a double loop is slow in Python, but broadcasting works
-    # if M and N are moderate. For enormous arrays, we might chunk or use numba later.
-    for i, t in enumerate(eval_t):
-        # Causal mask: only consider events strictly before t
-        # (Delta t > 0 is enforced)
-        valid_idx = t_hist < t
-        if not np.any(valid_idx):
-            continue
-            
-        dt = t - t_hist[valid_idx]
-        g_vals = omori_g(dt, c, p)
-        
-        intensities[i] += np.sum(weights[valid_idx] * g_vals)
-        
+    # Fully vectorized computation using broadcasting (M x N matrix)
+    # This exactly matches the requirement "vectorized temporal conditional intensity"
+    # eval_t is shape (M, 1), t_hist is shape (1, N)
+    dt_matrix = eval_t[:, None] - t_hist[None, :]
+    
+    # Causal mask: only consider events strictly before t (Delta t > 0)
+    causal_mask = dt_matrix > 0
+    
+    # We apply the mask to dt to avoid negative values in the kernel
+    # np.where is safe: shape is (M, N)
+    valid_dt = np.where(causal_mask, dt_matrix, 0.0)
+    
+    # Evaluate Omori kernel g(t) for all valid Delta t
+    g_matrix = omori_g(valid_dt, c, p)
+    
+    # Zero out non-causal entries
+    g_matrix = np.where(causal_mask, g_matrix, 0.0)
+    
+    # Sum over historical events (axis 1) weighted by productivity
+    # weights is shape (N,)
+    intensities += np.sum(g_matrix * weights[None, :], axis=1)
+    
     return intensities

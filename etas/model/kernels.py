@@ -25,6 +25,9 @@ def omori_g_log(t: np.ndarray, c: float, p: float) -> np.ndarray:
     """
     Evaluates the logarithm of the normalized temporal Omori kernel log(g(t)).
     
+    Cites: 01 Ogata 1988, Eq. 2 (logarithm of the kernel).
+    Formula: log(g(t)) = log((p-1)/c) - p * log(1 + t/c)
+    
     Args:
         t: Array of time differences (t - t_i). Must be >= 0.
         c: Omori c parameter.
