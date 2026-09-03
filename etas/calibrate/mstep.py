@@ -121,3 +121,58 @@ def m_step(event_times: np.ndarray,
     c_new, p_new = opt_res.x
     
     return mu_new, K_new, alpha_new, c_new, p_new
+
+from etas.model.spatial import spatial_kernel_powerlaw
+
+def m_step_spatial(t_hist: np.ndarray, 
+                   x_hist: np.ndarray, 
+                   y_hist: np.ndarray, 
+                   m_hist: np.ndarray, 
+                   t_start: float,
+                   t_end: float,
+                   mc: float, 
+                   bg_probs: np.ndarray, 
+                   rho_matrix: np.ndarray, 
+                   c_current: float, 
+                   p_current: float,
+                   d_current: float,
+                   q_current: float,
+                   gamma_current: float) -> Tuple[float, float, float, float, float, float, float]:
+    """
+    Computes the spatial M-step.
+    In the Zhuang model, mu(x,y) is updated in the KDE step (coupling loop), so we don't 
+    return mu_new here.
+    The integral of the spatial kernel is exactly 1 over infinite space, so K and alpha 
+    updates are mathematically identical to the temporal-only case, assuming we don't 
+    apply spatial boundary edge-corrections.
+    d, q, gamma are optimized numerically just like c, p.
+    """
+    _, K_new, alpha_new, c_new, p_new = m_step(
+        t_hist, m_hist, t_start, t_end, mc, bg_probs, rho_matrix, c_current, p_current
+    )
+    
+    # Numerical optimization for spatial parameters: d, q, gamma
+    i_idx, j_idx = np.nonzero(rho_matrix > 1e-8)
+    dx_pairs = x_hist[i_idx] - x_hist[j_idx]
+    dy_pairs = y_hist[i_idx] - y_hist[j_idx]
+    m_parent = m_hist[j_idx]
+    rho_pairs = rho_matrix[i_idx, j_idx]
+    
+    def dqg_neg_q(params):
+        d_val, q_val, gamma_val = params
+        f_vals = spatial_kernel_powerlaw(dx_pairs, dy_pairs, m_parent, mc, d_val, q_val, gamma_val)
+        
+        # log f
+        # add tiny epsilon to prevent log(0)
+        log_f = np.log(np.maximum(f_vals, 1e-30))
+        
+        # We want to maximize sum rho_ij * log(f_ij)
+        return -np.sum(rho_pairs * log_f)
+        
+    bounds = [(1e-3, 100.0), (1.001, 5.0), (0.0, 3.0)]
+    init_guess = [d_current, q_current, gamma_current]
+    
+    opt_res = minimize(dqg_neg_q, init_guess, bounds=bounds, method='L-BFGS-B')
+    d_new, q_new, gamma_new = opt_res.x
+    
+    return K_new, alpha_new, c_new, p_new, d_new, q_new, gamma_new
