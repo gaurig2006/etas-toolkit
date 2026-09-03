@@ -12,11 +12,15 @@ from obspy import read_events
 from .model import Catalog
 
 
-def parse_quakeml(source: Union[str, Path, io.BytesIO]) -> Catalog:
+def parse_quakeml(source: Union[str, Path, io.BytesIO, "obspy.core.event.Catalog"]) -> Catalog:
     """
     Parses QuakeML XML data into a standardized Catalog instance.
     """
-    cat_obspy = read_events(str(source) if isinstance(source, Path) else source)
+    if hasattr(source, "events"):
+        cat_obspy = source
+    else:
+        cat_obspy = read_events(str(source) if isinstance(source, Path) else source)
+        
     records = []
     skipped_count = 0
 

@@ -3,14 +3,16 @@ import pandas as pd
 from typing import Tuple
 from etas.catalog.model import Catalog
 from . import fdsn, comcat, isc, gcmt, afad, geonet
+from .scrape import csn_chile, ingv_horus
 
-# Note: We'll add scrapers later as they are built.
 SOURCES = {
     "usgs": comcat.get_events,
     "isc": isc.get_events,
     "gcmt": gcmt.get_events,
     "afad": afad.get_events,
     "geonet": geonet.get_events,
+    "csn_chile": csn_chile.get_events,
+    "ingv_horus": ingv_horus.get_events,
     # Map regions to default sources
     "california": comcat.get_events,
     "global": comcat.get_events,
@@ -18,6 +20,7 @@ SOURCES = {
     "greece": lambda bbox, tr, mag: fdsn.FDSNClient("NOA").get_events(bbox, tr, mag),
     "new_zealand": geonet.get_events,
     "turkiye": afad.get_events,
+    "chile": csn_chile.get_events,
 }
 
 def get_events(
