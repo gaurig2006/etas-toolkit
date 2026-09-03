@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 from etas.sources.registry import get_events
+from etas.catalog.clean import read_cache, write_cache
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch earthquake catalogs.")
@@ -24,7 +25,17 @@ def main():
             bbox = (-180.0, 180.0, -90.0, 90.0)
             
         print(f"Fetching catalog for {args.region} from {args.from_yr} to {args.to_yr}, M>={args.min_mag}...")
-        catalog = get_events(args.region, bbox, (start_time, end_time), args.min_mag)
+        
+        # Check cache first
+        cache_key = f"{args.region}_{args.from_yr}_{args.to_yr}_{args.min_mag}_{bbox}"
+        catalog = read_cache(cache_key)
+        
+        if catalog is not None:
+            print("Loaded from cache.")
+        else:
+            catalog = get_events(args.region, bbox, (start_time, end_time), args.min_mag)
+            write_cache(catalog, cache_key)
+            print("Downloaded and cached.")
         
         print(f"Fetched {len(catalog)} events.")
         if args.out.endswith(".csv"):

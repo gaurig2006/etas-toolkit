@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 from typing import Union, Tuple
+from etas.catalog.model import Catalog
 
-def calc_bvalue(mags: Union[pd.Series, np.ndarray], mc: float, bin_width: float = 0.1) -> Tuple[float, float, float]:
+def calc_bvalue(data: Union[Catalog, pd.Series, np.ndarray], mc: float, bin_width: float = 0.1) -> Tuple[float, float, float]:
     """
     Computes the b-value, a-value, and standard error (delta b) via the Aki-Utsu MLE.
     
@@ -13,14 +14,18 @@ def calc_bvalue(mags: Union[pd.Series, np.ndarray], mc: float, bin_width: float 
         db = 2.3 * b^2 * sqrt( sum((M_i - <M>)^2) / (N*(N-1)) )   (Shi & Bolt 1982)
         
     Args:
-        mags: Array or Series of earthquake magnitudes.
+        data: A Catalog object, or an Array/Series of earthquake magnitudes.
         mc: The Magnitude of Completeness cutoff.
         bin_width: Width of the magnitude bins (default 0.1).
         
     Returns:
         Tuple of (b_value, a_value, b_std_err). Returns (np.nan, np.nan, np.nan) if not enough data.
     """
-    mags = np.array(mags)
+    if isinstance(data, Catalog):
+        mags = data.df["magnitude"].dropna().values
+    else:
+        mags = np.array(data)
+        
     mags_above = mags[mags >= mc]
     n = len(mags_above)
     
