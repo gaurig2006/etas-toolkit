@@ -1,8 +1,8 @@
 # Phase 6: The Point Process & Temporal ETAS Model
 
 ## 1. ETAS Conditional Intensity
-The Epidemic-Type Aftershock Sequence (ETAS) model describes the earthquake generation process as a Hawkes point process. The conditional intensity function, given the history $H_t$ of all events up to time $t$, is (Ogata 1988, Eq. 2):
-$$ \lambda(t, x, y, m \mid H_t) = \mu(x, y) + \sum_{i: t_i < t} K e^{\alpha(m_i - M_c)} g(t - t_i) f(x - x_i, y - y_i; m_i) $$
+The Epidemic-Type Aftershock Sequence (ETAS) model describes the earthquake generation process as a Hawkes point process. The conditional intensity function, given the history $H_t$ of all events up to time $t$, is (Ogata 1988, Eq. 2 and Appendix B):
+$$ \lambda(t, x, y, m \mid H_t) = \mu(x, y) + \sum_{i: t_i < t} K e^{\alpha(m_i - m_0)} g(t - t_i) f(x - x_i, y - y_i; m_i) $$
 Where the parameters are:
 - $\mu(x, y)$: Background seismicity rate (time-independent, spatial).
 - $K$: Baseline productivity (expected number of offspring from a magnitude $M_c$ event).
