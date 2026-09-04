@@ -50,6 +50,7 @@ def get_events(
         
         if "Year" in df_raw.columns:
             # Construct datetime
+            df_raw.rename(columns={"Mo": "Month", "Da": "Day", "Ho": "Hour", "Mi": "Minute", "Se": "Second"}, inplace=True)
             df_raw["time"] = pd.to_datetime(df_raw[["Year", "Month", "Day", "Hour", "Minute", "Second"]])
             df_raw = df_raw.rename(columns={"Lat": "latitude", "Lon": "longitude", "Depth": "depth", "Mw": "magnitude"})
             df_raw["magnitude_type"] = "Mw"
