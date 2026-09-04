@@ -14,7 +14,7 @@ def time_residuals(event_times: np.ndarray,
     """
     Computes the transformed-time residuals tau_i for the ETAS model.
     
-    Cites: 01 Ogata 1988, Section 4.
+    Cites: 01 Ogata 1988, Eq. 8 (Time Rescaling Theorem).
     Formula: tau_i = Lambda(t_start, t_i) = int_{t_start}^{t_i} lambda(s) ds
     
     Args:
@@ -62,6 +62,7 @@ def plot_residual_ks(tau: np.ndarray, ax=None):
     Plots the empirical cumulative distribution of transformed times against the 
     theoretical uniform distribution (Kolmogorov-Smirnov diagnostic plot).
     
+    Cites: 01 Ogata 1988, Section 4 (Diagnostic checks).
     If the ETAS model fits perfectly, tau_i forms a stationary Poisson process with rate 1,
     meaning the normalized inter-event times U_i = 1 - exp(-(tau_i - tau_{i-1})) are uniformly
     distributed on [0, 1].
