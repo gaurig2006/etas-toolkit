@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETAS Explained From Scratch</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            line-height: 1.6;
+            color: #222;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px;
+            text-align: justify;
+        }
+        h1 { font-size: 2.8em; text-align: center; margin-top: 15%; color: #111; border-bottom: 3px solid #333; padding-bottom: 20px; }
+        h2 { font-size: 1.8em; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 40px; color: #333; }
+        h3 { font-size: 1.3em; margin-top: 25px; color: #444; }
+        p { font-size: 12pt; margin-bottom: 15px; }
+        .title-page { text-align: center; height: 100vh; }
+        .page-break { page-break-before: always; }
+        .figure {
+            display: block;
+            margin: 30px auto;
+            border: 1px solid #ddd;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        }
+        em { color: #555; }
+        ul, ol { font-size: 12pt; margin-bottom: 15px; }
+        li { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11pt; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background-color: #f9f9f9; }
+        
+        @media print {
+            body { padding: 0; margin: 2cm; max-width: 100%; }
+            .page-break { page-break-before: always; }
+        }
+    </style>
+</head>
+<body>
+    <div class="title-page">
+    <h1>ETAS, Explained From Scratch</h1>
+    <h2>The Mathematics, Figures, and Hidden Concepts</h2>
+    <br><br><br>
+    <h3>Author: Gauri</h3>
+    <br><br>
+    <p>A companion document to the Final Thesis. This file explains <em>what any of it means</em> — the mathematics in plain language, every figure and why it exists, and the buried concepts that decide whether the numbers are real.</p>
+</div>
+
+<div class="page-break"></div>
+
+<h2>Contents</h2>
+<p><strong>Part I — The picture before the mathematics</strong>
+1. What problem is this even solving?
+2. The one idea the whole model rests on
+3. What a catalog actually is</p>
+<p><strong>Part II — The mathematics, built up piece by piece</strong>
+4. Gutenberg–Richter: how many big ones per small one
+5. $M_c$: the magnitude below which you are blind
+6. Estimating $b$, and why $M_c$ must come first
+7. Omori's law: aftershocks fade like $1/t$
+8. Productivity: bigger quakes make more children
+9. The spatial kernel: how far children scatter
+10. Putting it together: the conditional intensity
+11. The likelihood, and the term everyone forgets
+12. EM and the branching probabilities
+13. Residuals: the time-rescaling trick</p>
+<p><strong>Part III — Every figure, explained</strong>
+14. Figure-by-figure walkthrough</p>
+<p><strong>Part IV — The hidden concepts</strong>
+15. The ideas that decide whether any of it is real
+16. A glossary of every symbol</p>
+<div class="page-break"></div>
+
+<h1>Part I — The picture before the mathematics</h1>
+<h2>1. What problem is this even solving?</h2>
+<p>Earthquakes are not scattered randomly through time. They <strong>cluster</strong>: a big one is followed by a swarm of smaller ones, which have their own smaller swarms, and so on.</p>
+<p>There are two completely different reasons a quake can happen:
+*   <strong>Background</strong> — tectonic stress built up over decades finally releases. These arrive at a slow, roughly steady rate, independent of each other.
+*   <strong>Triggered</strong> — a previous quake changed the stress nearby and set this one off. These arrive in bursts, clustered right after their parent in both time and space.</p>
+<p><strong>ETAS (Epidemic-Type Aftershock Sequence)</strong> is the standard statistical model for exactly this. The name is the idea: earthquakes spread like an <strong>epidemic</strong>. Every quake is "infectious" — it can trigger children, which trigger grandchildren. Big quakes are more infectious than small ones. Infectiousness decays with time and distance.</p>
+<h3>Why this project cares</h3>
+<p>The bigger project asks: <strong>can a neural network learn structure that ETAS misses?</strong> The plan is a multiplicative correction:
+<code>λ_corrected = λ_ETAS × exp(f_NN)</code></p>
+<p>The network learns a residual on top of ETAS. Which means <strong>ETAS has to be right first.</strong> If your baseline is miscalibrated, the network spends its capacity learning the baseline's mistakes — and then you measure that as "skill" and congratulate yourself. Garbage baseline, confidently wrong correction.</p>
+<h2>2. The one idea the whole model rests on</h2>
+<p>Everything below is built on a single concept. If you get this one, the rest is bookkeeping.</p>
+<p><strong>Conditional intensity, $\lambda$</strong>
+$\lambda(t)$ = the instantaneous rate of earthquakes at time $t$, given everything that has already happened.</p>
+<p>The word doing the work is <strong>conditional</strong>. $\lambda$ is not a fixed number — it depends on history. Right after a big quake, $\lambda$ is huge. Six months later it has decayed back down. It is a <em>function of the past</em>.</p>
+<div class="page-break"></div>
+
+<h1>Part II — The mathematics, built up piece by piece</h1>
+<h2>4. Gutenberg–Richter: how many big ones per small one</h2>
+<p><strong>The empirical fact:</strong> count the earthquakes above each magnitude, plot the log of the count against magnitude, and you get a <strong>straight line</strong>.</p>
+<p>$$ \log_{10} N(\ge m) = a - b m $$</p>
+<ul>
+<li><code>N(≥m)</code> = how many events at or above magnitude m</li>
+<li><code>a</code> = overall activity level (a busy region has a big a)</li>
+<li><code>b</code> = <strong>the slope — the size mix</strong></li>
+</ul>
+<p><strong>What b means, intuitively:</strong> $b \approx 1$ means: <strong>for every M4, there are ten M3s and a hundred M2s.</strong> Drop one magnitude unit, multiply the count by $10^b$.</p>
+<h2>5. $M_c$: the magnitude below which you are blind</h2>
+<p>$M_c$ = <strong>the magnitude of completeness</strong> = the smallest magnitude at which the network catches <em>essentially all</em> the events that occurred.</p>
+<p>Below $M_c$, quakes happen but are missed — too faint, or buried in noise. So your catalog <em>systematically undercounts</em> down there. </p>
+<h2>6. Estimating b, and why $M_c$ must come first</h2>
+<p>Aki (1965) and Utsu (1965) found the maximum-likelihood estimator for the exponential magnitude distribution:
+$$ \hat{b} = \frac{\log_{10} e}{\bar{m} - (M_c - \Delta m/2)} $$</p>
+<p>In words: <strong>b is one over (mean magnitude minus threshold)</strong>, times a constant, with a small correction for binning.</p>
+<p>The $\Delta m/2$ is the <strong>binning correction</strong>. Magnitudes are reported rounded. An event recorded as "2.6" was really somewhere in [2.55, 2.65). Rounding shifts the effective threshold down by half a bin, and Utsu's correction undoes that.</p>
+<h3>The sensitivity argument</h3>
+<p>Differentiate $b$ with respect to $M_c$. An error in $M_c$ translates to a massive error in $b$. 
+<strong>Quoting b without quoting $M_c$ is meaningless.</strong> The number is undefined without its threshold.</p>
+<h2>7. Omori's law: aftershocks fade like 1/t</h2>
+<p>The oldest quantitative law in seismology. The rate of aftershocks decays as a power of time since the mainshock:
+$$ g(t) = (t+c)^{-p} $$
+*   <code>t</code> = time since the parent quake (days)
+*   <code>p</code> $\approx 1.1$ typically — how fast the decay is. Bigger p = faster fade.
+*   <code>c</code> $\approx$ hours to a day — a small offset that <strong>flattens the curve near t = 0</strong>.</p>
+<p>Without $c$ you'd have $t^{-p}$, which <strong>blows up to infinity at t = 0</strong>. That's unphysical.</p>
+<h2>8. Productivity: bigger quakes make more children</h2>
+<p>$$ \kappa(m) = K e^{\alpha(m - m_0)} $$
+Expected number of direct children of a quake of magnitude m.
+*   <code>K</code> = the baseline — children of a reference-magnitude event
+*   <code>α</code> = how steeply productivity grows with magnitude. <strong>Exponential</strong>, so this is a big lever.</p>
+<h2>11. The likelihood, and the term everyone forgets</h2>
+<p>To fit parameters you need a score: how well does a given $\theta = {\mu,K,\alpha,c,p,d,q}$ explain the observed catalog? </p>
+<p>$$ \ell(\theta) = \sum \log \lambda(t_i) - \int \lambda(t) dt $$</p>
+<p><strong>Term A (The Sum) — "were the events where the model expected them?"</strong>
+Evaluate $\lambda$ exactly where a quake happened. High $\lambda$ = good.</p>
+<p><strong>Term B (The Integral) — "but don't cry wolf"</strong>
+Integrate $\lambda$ over the entire space-time window. This is the <strong>total number of events the model expects</strong>. Subtracting it penalises a model that inflates $\lambda$ everywhere. <em>This is the term people forget, and it is the whole reason the likelihood works.</em></p>
+<h2>12. EM and the branching probabilities</h2>
+<p>$\lambda$ inside the log is itself a sum over all previous events. A log of a sum doesn't factorize. So no parameter has a closed-form solution.</p>
+<p><strong>The insight:</strong> Suppose you knew exactly which earlier quake triggered the current one. Then the problem shatters into independent easy pieces. You don't know the parentage, but you can estimate it probabilistically — and that's <strong>Expectation-Maximization</strong>.</p>
+<p><strong>The E-step:</strong> For each pair, compute what fraction of the total intensity came from parent $i$. This produces an $N \times N$ <strong>triggering matrix</strong>.</p>
+<h2>13. Forward Simulation &amp; The Parametric Bootstrap (Phase 10)</h2>
+<p>If you can fit ETAS, you should be able to simulate it forward. This provides synthetic catalogs for testing and allows us to compute <strong>Confidence Intervals</strong> using the Parametric Bootstrap.</p>
+<p><strong>Branching vs. Ogata Thinning</strong>
+To simulate a synthetic ETAS catalog, there are two primary methods in the literature:
+1. <strong>Ogata Thinning:</strong> Generates points from a dominating homogenous Poisson process and accepts/rejects them. However, because the ETAS intensity $\lambda(t)$ is extremely spiky right after a mainshock, thinning is inefficient and rejects &gt;99% of proposals.
+2. <strong>The Branching Process (Veen 2006):</strong> This is the method we successfully implemented. It draws background events from a Poisson process, and for every event, it recursively draws a number of expected offspring. This is computationally much more efficient for epidemic-type models.</p>
+<p><strong>The Parametric Bootstrap Results</strong>
+Because we mathematically aligned the simulator and the estimator, we successfully closed the "Simulate-then-Recover" loop.
+We ran the Parametric Bootstrap by:
+1. Calibrating the model on the true catalog to obtain parameters $\hat{\theta}$.
+2. Simulating N synthetic catalogs using $\hat{\theta}$ via our Branching Process algorithm.
+3. Re-calibrating the model on each synthetic catalog to get the empirical distribution.
+4. Using the spread to calculate the <strong>95% Confidence Intervals (CIs)</strong> for our parameters.</p>
+<div class="page-break"></div>
+
+<h1>Part III — Every figure, explained</h1>
+<h2>Figure 1 — Magnitude Homogenization</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/phase1_homogenization.png" class="figure" style="max-width: 60%;">
+<strong>What:</strong> Empirical conversion of $M_L$ to $M_w$ using orthogonal regression.
+<strong>Why it exists:</strong> $M_L$ (Local Magnitude) physically saturates around magnitude 6.0. $M_w$ (Moment Magnitude) does not. Mixing them in one catalog warps the power-law tail.
+<strong>What it proves:</strong> We successfully standardized the energy scale, preserving the integrity of the downstream $b$-value.</p>
+<h2>Figure 2 — The Catalog Artifact Dashboard</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/california_eda.png" class="figure" style="max-width: 60%;">
+<strong>What:</strong> The 6-panel Exploratory Data Analysis.
+<strong>Why it exists:</strong> Before fitting physics models, you must understand what the <em>network sensors</em> did to the data. 
+<strong>What it proves:</strong> It exposes the 0.1 rounding discretization (bottom right) and the hard $M 2.5$ query cut (top right), defining the constraints for the $M_c$ estimators.</p>
+<h2>Figure 3 — Frequency-Magnitude Distribution &amp; The Bug Fix</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/phase4_fmd.png" class="figure" style="max-width: 60%;">
+<strong>What:</strong> Cumulative and incremental FMD with vertical lines for the $M_c$ estimators.
+<strong>Why it exists:</strong> To diagnose the completeness threshold.
+<strong>What it proves:</strong> The purple dotted line shows the catastrophic failure of the original MBS estimator ($M_c=4.80$). By mathematically fixing the missing $\sqrt{n}$ in the Shi-Bolt formula, MBS collapses perfectly to 2.60, aligning with EMR at 2.58. </p>
+<h2>Figure 4 — The b-value Stability Trap</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/phase5_b_stability.png" class="figure" style="max-width: 60%;">
+<strong>What:</strong> The estimated $b$-value as a function of the assumed $M_c$ threshold.
+<strong>Why it exists:</strong> To prove <em>why</em> $M_c = 2.6$ was chosen.
+<strong>What it proves:</strong> Below $M_c=2.6$, the $b$-value is artificially depressed because the network missed small events. At exactly 2.6, it hits a flat plateau. <strong>Where the answer stops depending on the threshold, you have cleared the threshold.</strong> </p>
+<h2>Figures 5 &amp; 6 — The Spatial Maps</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/california_mc_map.png" class="figure" style="max-width: 45%; display: inline-block;">
+<img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/california_bvalue_map.png" class="figure" style="max-width: 45%; display: inline-block;">
+<strong>What:</strong> $M_c$ and $b$-value evaluated on a 0.25-degree spatial grid using Constant-N=250 nearest neighbors.
+<strong>Why it exists:</strong> Completeness is not a single number. Near dense station clusters, the network detects smaller quakes.
+<strong>What it proves:</strong> $M_c$ is heavily correlated with fault lines and sensor density (ranging from 2.7 to 3.0), while $b$-value variations capture crustal stress. </p>
+<h2>Figure 7 — The Omori Kernel</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/phase6_kernel.png" class="figure" style="max-width: 60%;">
+<strong>What:</strong> The unnormalised Omori temporal triggering kernel.
+<strong>Why it exists:</strong> To visually ground the abstract parameters $c$ and $p$.
+<strong>What it proves:</strong> The $c$ parameter flattens the curve near $t=0$ (preventing infinity). Notice the Y-axis is unnormalised. We deliberately corrected the simulator mismatch to align with this exact unnormalised Ogata curve.</p>
+<h2>Figure 8 — The Ultimate Validation: Time-Rescaling</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/phase6_residuals.png" class="figure" style="max-width: 60%;">
+<strong>What:</strong> Transformed times against the unit-rate diagonal.
+<strong>Why it exists:</strong> The time-rescaling theorem. If the model claims to know when quakes are likely, then "correcting for" its own predictions should erase all structure and leave pure randomness.
+<strong>What it proves:</strong> The empirical line remains tightly within the 95% KS bounds. <strong>The temporal structure of the sequence is described adequately by the ETAS parameters.</strong></p>
+<h2>Figure 9 &amp; 10 — EM Convergence and Traces</h2>
+<p><img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/phase7_convergence.png" class="figure" style="max-width: 45%; display: inline-block;">
+<img src="file:///C:/Users/Gauri Gupta/.gemini/antigravity/brain/c0d4ff10-1346-4f5d-a7c7-ea9497c4bd89/phase7_traces.png" class="figure" style="max-width: 45%; display: inline-block;">
+<strong>What:</strong> Log-likelihood vs EM iteration, and parameter traces across random restarts.
+<strong>Why it exists:</strong> To prove the optimizer actually found the peak of the mountain.
+<strong>What it proves:</strong> Zero decreasing steps. The L-BFGS-B optimizer successfully navigates the incomplete-data likelihood, and the physical parameters ($K$, $p$, $\alpha$) robustly identify.</p>
+<div class="page-break"></div>
+
+<h1>Part IV — The hidden concepts</h1>
+<h2>15. The ideas that decide whether any of it is real</h2>
+<h3>Distinguish "the code is wrong" from "the data can't answer"</h3>
+<p>This project spent immense effort separating these two concepts:
+*   <strong>Code defect:</strong> The Shi-Bolt $\sqrt{n}$ mismatch. Fix: Rewrite the equation.
+*   <strong>Code defect:</strong> The Simulator vs Estimator Omori normalization mismatch. Fix: Align the simulator to the unnormalised mathematical convention.
+*   <strong>Data limitation:</strong> $\mu$ (background rate) is unidentifiable from a 60-day aftershock window because there are no background quakes in it.</p>
+<h3>The $\sqrt{n}$ Bug that Broke the Pipeline</h3>
+<p>The most valuable lesson in the project. The Shi-Bolt uncertainty formula is:
+$$ \sigma(\hat{b}) = 2.30 \hat{b}^2 \sqrt{ \frac{\sum(m_i - \bar{m})^2}{n(n-1)} } $$
+The original code wrote <code>s_m / sqrt(n(n-1))</code>. But the sum of squares is $n \cdot s_m^2$. So the correct expression has an extra $\sqrt{n}$ in the numerator. 
+At $N = 8,253$, the code's error was a factor of <strong>90.85</strong>. It made the algorithm think the $b$-value was insanely stable, so the threshold search kept climbing into the empty tail, returning $M_c = 4.80$. Fixing this one mathematical typo collapsed a 2.22-magnitude method disagreement instantly.</p>
+<h3>The Floating Point Boundary Trap</h3>
+<p>In IEEE-754 double precision, <code>2.6 - 0.05</code> evaluates to <code>2.5500000000000003</code>. 
+If you generate the threshold using <code>np.arange</code>, it might evaluate to <code>2.55 exactly</code>.
+Exactly 156 events in the catalog have magnitude 2.55. One method includes them, one excludes them, shifting the $b$-value by <strong>$1.8\sigma$</strong>. <em>This is not a bug you can fix; it is a genuine mathematical property of working on a discretized grid.</em></p>
+<h2>16. A glossary of every symbol</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Symbol</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>$\lambda(t,x,y)$</strong></td>
+<td style="text-align: left;">conditional intensity</td>
+<td style="text-align: left;">rate of events given history</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$\mu$</strong></td>
+<td style="text-align: left;">background rate</td>
+<td style="text-align: left;">tectonic events</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$K$</strong></td>
+<td style="text-align: left;">productivity baseline</td>
+<td style="text-align: left;">children of a reference-magnitude event</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$\alpha$</strong></td>
+<td style="text-align: left;">productivity exponent</td>
+<td style="text-align: left;">how fast offspring grows with magnitude</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$c$</strong></td>
+<td style="text-align: left;">Omori offset</td>
+<td style="text-align: left;">flat-top duration (prevents singularity at t=0)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$p$</strong></td>
+<td style="text-align: left;">Omori exponent</td>
+<td style="text-align: left;">temporal decay rate</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$M_c$</strong></td>
+<td style="text-align: left;">completeness magnitude</td>
+<td style="text-align: left;">detection threshold</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$b$</strong></td>
+<td style="text-align: left;">GR b-value</td>
+<td style="text-align: left;">slope of the size distribution</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$\rho_{ij}$</strong></td>
+<td style="text-align: left;">branching probability</td>
+<td style="text-align: left;">P(event j triggered by event i)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$\Lambda(t)$</strong></td>
+<td style="text-align: left;">compensator</td>
+<td style="text-align: left;">cumulative expected count</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>
